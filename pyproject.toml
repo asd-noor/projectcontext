@@ -3,6 +3,7 @@ name = "agent-memory"
 version = "1.0.0"
 description = "Agent Memory - MCP Server for long-term memory storage with semantic and keyword search"
 readme = "README.md"
+license = { text = "GPL-3.0-or-later" }
 authors = [
     { name = "Asaduzzaman Noor", email = "asad.noor.antor@gmail.com" }
 ]

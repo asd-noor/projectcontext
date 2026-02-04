@@ -305,4 +305,4 @@ npx @modelcontextprotocol/inspector uv run agent-memory
 
 ## License
 
-MIT
+GPLv3
