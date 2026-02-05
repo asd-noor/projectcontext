@@ -28,4 +28,4 @@ Thumbs.db
 models/
 
 # Test Database
-.agent-memory/
+.project-hub/

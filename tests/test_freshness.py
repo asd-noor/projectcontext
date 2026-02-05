@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Test script to verify freshness-aware ranking"""
 
-from agent_memory.server import engine
+from agentmemory.server import engine
 import sqlite3
 import time
 

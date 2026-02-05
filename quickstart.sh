@@ -34,8 +34,8 @@ echo ""
 
 # Show available commands
 echo "📝 Available Commands:"
-echo "   • Start MCP server:     uv run agent-memory"
-echo "   • Test with inspector:  npx @modelcontextprotocol/inspector uv run agent-memory"
+echo "   • Start MCP server:     uv run agentmemory"
+echo "   • Test with inspector:  npx @modelcontextprotocol/inspector uv run agentmemory"
 echo "   • Run tests:            uv run python tests/test_server.py"
 echo ""
 
@@ -52,5 +52,5 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "🎯 Starting MCP server..."
     echo "   (Press Ctrl+C to stop)"
     echo ""
-    uv run agent-memory
+    uv run agentmemory
 fi

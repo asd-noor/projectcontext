@@ -14,7 +14,7 @@ async def test_resource():
         # Start the MCP server as a subprocess
         server_params = StdioServerParameters(
             command="uv",
-            args=["run", "agent-memory"],
+            args=["run", "agentmemory"],
         )
 
         print("=== Starting MCP Server ===")

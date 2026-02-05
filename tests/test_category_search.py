@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Test script for category search functionality"""
 
-from agent_memory.server import MemoryEngine
+from agentmemory.server import MemoryEngine
 
 
 def test_category_search():

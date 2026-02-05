@@ -5,6 +5,6 @@ A long-running MCP server that provides semantic and keyword search for long-ter
 
 __version__ = "0.1.0"
 
-from agent_memory.server import main, save_memory, query_memory
+from agentmemory.server import main, save_memory, query_memory
 
 __all__ = ["main", "save_memory", "query_memory"]

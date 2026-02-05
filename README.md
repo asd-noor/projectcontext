@@ -15,7 +15,7 @@ A high-performance MCP (Model Context Protocol) server providing long-term memor
 ```bash
 # Clone the repository
 git clone <repo-url>
-cd agent-memory
+cd agentmemory
 
 # Install dependencies with uv
 uv sync
@@ -30,10 +30,10 @@ uv pip install -e .
 
 ```bash
 # Run directly
-agent-memory
+agentmemory
 
 # Or with uv
-uv run agent-memory
+uv run agentmemory
 ```
 
 ### MCP Configuration
@@ -45,8 +45,8 @@ Add to your MCP client configuration (e.g., `mcp.json`):
   "mcpServers": {
     "memory": {
       "command": "uv",
-      "args": ["run", "agent-memory"],
-      "cwd": "/path/to/agent-memory"
+      "args": ["run", "agentmemory"],
+      "cwd": "/path/to/agentmemory"
     }
   }
 }
@@ -58,7 +58,7 @@ Or using the installed script:
 {
   "mcpServers": {
     "memory": {
-      "command": "agent-memory"
+      "command": "agentmemory"
     }
   }
 }
@@ -272,9 +272,9 @@ The database is stored in `.agent-memory/db.sqlite` in the git root directory (o
 ### Project Structure
 
 ```
-agent-memory/
+agentmemory/
 ├── src/
-│   └── agent_memory/
+│   └── agentmemory/
 │       ├── __init__.py
 │       └── server.py       # MCP server implementation
 ├── pyproject.toml          # Project configuration
@@ -300,7 +300,7 @@ uv run python tests/test_updates.py
 You can also test the tools interactively using the MCP Inspector:
 
 ```bash
-npx @modelcontextprotocol/inspector uv run agent-memory
+npx @modelcontextprotocol/inspector uv run agentmemory
 ```
 
 ## License

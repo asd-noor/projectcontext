@@ -48,7 +48,7 @@ def get_db_path() -> str:
         return os.path.join(git_root, dbdir, dbfile)
     except (subprocess.CalledProcessError, FileNotFoundError):
         # Fallback to current working directory if not a git repo or git not found
-        return os.path.join(os.getcwd(), ".agent-memory", "db.sqlite")
+        return os.path.join(os.getcwd(), dbdir, dbfile)
 
 
 DB_PATH = get_db_path()
