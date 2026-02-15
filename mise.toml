@@ -6,3 +6,31 @@ uv = "0.9.28"
 
 [env]
 _.python.venv = { path = ".venv" }
+
+[tasks.start]
+description = "Start the MCP server"
+run = "uv run agentmemory"
+
+[tasks.test]
+description = "Run all tests"
+depends = ["test:server", "test:updates", "test:category", "test:agenda", "test:resource"]
+
+[tasks."test:server"]
+description = "Run basic memory server tests"
+run = "uv run python tests/test_server.py"
+
+[tasks."test:updates"]
+description = "Run memory update/delete tests"
+run = "uv run python tests/test_updates.py"
+
+[tasks."test:category"]
+description = "Run memory category search tests"
+run = "uv run python tests/test_category_search.py"
+
+[tasks."test:agenda"]
+description = "Run agenda engine tests"
+run = "uv run python tests/test_agenda.py"
+
+[tasks."test:resource"]
+description = "Run resource documentation tests"
+run = "uv run python tests/test_resource.py"
