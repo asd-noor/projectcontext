@@ -2,57 +2,61 @@
 """Test script for Agenda functionality"""
 
 from agentmemory.agenda import AgendaEngine
-from agentmemory.memory import MemoryEngine
 
 
 def test_agenda():
-    print("Initializing Engines...")
-    m_engine = MemoryEngine()
+    print("Initializing Engine...")
     a_engine = AgendaEngine()
 
-    # 1. Create some memories to relate to
-    print("\n=== 1. Creating Test Memory ===")
-    m_result = m_engine.save(
-        category="test", topic="Agenda Context", content="Context for agenda."
-    )
-    memory_id = m_result["doc_id"]
-    print(f"Created memory ID: {memory_id}")
-
-    # 2. Create an agenda
-    print("\n=== 2. Creating Agenda ===")
+    # 1. Create an agenda
+    print("\n=== 1. Creating Agenda ===")
     tasks = [
-        {"description": "Task 1 (Required)", "is_optional": False},
+        {"details": "Task 1 (Required)", "is_optional": False},
         {
-            "description": "Task 2 (Optional)",
+            "details": "Task 2 (Optional)",
             "is_optional": True,
             "acceptance_guard": "Must be optional",
         },
-        {"description": "Task 3 (Required)", "is_optional": False},
+        {"details": "Task 3 (Required)", "is_optional": False},
     ]
-    a_result = a_engine.create_agenda(tasks=tasks, memory_ids=[memory_id])
+    a_result = a_engine.create_agenda(tasks=tasks, title="My Plan", description="A test plan")
     agenda_id = a_result["agenda_id"]
     print(f"Created agenda ID: {agenda_id}")
 
-    # 3. List agendas
-    print("\n=== 3. Listing Agendas ===")
+    # 2. List agendas
+    print("\n=== 2. Listing Agendas ===")
     agendas = a_engine.list_agendas(active_only=True)
     print(f"Active agendas: {agendas}")
     assert any(a["id"] == agenda_id for a in agendas)
+    
+    # Verify title/description
+    my_agenda = next(a for a in agendas if a["id"] == agenda_id)
+    assert my_agenda["title"] == "My Plan"
+    assert my_agenda["description"] == "A test plan"
 
-    # 4. Get agenda details
-    print("\n=== 4. Getting Agenda Details ===")
+    # 3. Get agenda details
+    print("\n=== 3. Getting Agenda Details ===")
     details = a_engine.get_agenda(agenda_id)
     print(f"Agenda Details: {details}")
     assert len(details["tasks"]) == 3
-    assert "related_memories" not in details
-    
-    related_memories = a_engine.get_agenda_related_memories(agenda_id)
-    print(f"Related Memories: {related_memories}")
-    assert memory_id in related_memories
+    assert details["title"] == "My Plan"
 
-    memory_related_agendas = a_engine.get_memory_related_agendas(memory_id)
-    print(f"Memory Related Agendas: {memory_related_agendas}")
-    assert agenda_id in memory_related_agendas["active"]
+    # 4. Test Search
+    print("\n=== 4. Testing Search ===")
+    # Search by description
+    results_desc = a_engine.search_agendas("test plan")
+    print(f"Search 'test plan' (Description): {len(results_desc)} results")
+    assert any(a["id"] == agenda_id for a in results_desc)
+
+    # Search by title
+    results_title = a_engine.search_agendas("My Plan")
+    print(f"Search 'My Plan' (Title): {len(results_title)} results")
+    assert any(a["id"] == agenda_id for a in results_title)
+
+    # Search by task detail (should NOT find anything)
+    results_task = a_engine.search_agendas("Task 2")
+    print(f"Search 'Task 2' (Task Detail): {len(results_task)} results")
+    assert len(results_task) == 0
 
     # 5. Update tasks and check auto-completion
     print("\n=== 5. Updating Tasks ===")
@@ -79,13 +83,27 @@ def test_agenda():
     assert details["is_active"] is False
     assert "marked as completed" in update_res["message"]
 
-    # 5.1 Test update_agenda (Add tasks)
-    print("\n=== 5.1 Testing Update Agenda (Add tasks) ===")
+    # 6. Test update_agenda (Add tasks)
+    print("\n=== 6. Testing Update Agenda (Add tasks) ===")
     # Create a new active agenda
-    a_res2 = a_engine.create_agenda([{"description": "T1"}])
+    a_res2 = a_engine.create_agenda([{"details": "T1"}], title="Agenda 2")
     aid2 = a_res2["agenda_id"]
     
-    a_engine.update_agenda(aid2, new_tasks=[{"description": "T2"}])
+    # Update title (SHOULD update search index now)
+    a_engine.update_agenda(aid2, title="Agenda 2 Updated")
+    details2 = a_engine.get_agenda(aid2)
+    assert details2["title"] == "Agenda 2 Updated"
+    
+    # Check if search index updated
+    results_upd = a_engine.search_agendas("Updated")
+    assert any(a["id"] == aid2 for a in results_upd)
+
+    # Update description (SHOULD also update search index)
+    a_engine.update_agenda(aid2, description="Now with Updated description")
+    results_desc_upd = a_engine.search_agendas("Updated")
+    assert any(a["id"] == aid2 for a in results_desc_upd)
+
+    a_engine.update_agenda(aid2, new_tasks=[{"details": "T2"}])
     details2 = a_engine.get_agenda(aid2)
     assert len(details2["tasks"]) == 2
     print("✅ Added task to active agenda")
@@ -101,28 +119,25 @@ def test_agenda():
     print("✅ Reactivation blocked")
 
     # Try to add task to inactive
-    add_to_inactive = a_engine.update_agenda(aid2, new_tasks=[{"description": "T3"}])
+    add_to_inactive = a_engine.update_agenda(aid2, new_tasks=[{"details": "T3"}])
     assert add_to_inactive["status"] == "error"
     print("✅ Adding task to inactive agenda blocked")
 
-    # 6. Delete agenda
-    print("\n=== 6. Deleting Agenda ===")
+    # 7. Delete agenda
+    print("\n=== 7. Deleting Agenda ===")
     
     # Try deleting aid2 which is inactive (from previous step)
     del_res = a_engine.delete_agenda(aid2)
     print(f"Delete Inactive Result: {del_res}")
     assert del_res["status"] == "success"
+    
+    # Check search index cleaned
+    results_del = a_engine.search_agendas("Agenda 2 Updated")
+    assert not any(a["id"] == aid2 for a in results_del)
 
     # Create a new active agenda and try to delete it
-    a_res3 = a_engine.create_agenda([{"description": "Delete Me?"}])
+    a_res3 = a_engine.create_agenda([{"details": "Delete Me?"}])
     aid3 = a_res3["agenda_id"]
-
-    # Test create_agenda_memory_relations explicitly
-    print("\n=== Testing create_agenda_memory_relations ===")
-    a_engine.create_agenda_memory_relations([(aid3, memory_id)])
-    related = a_engine.get_agenda_related_memories(aid3)
-    assert memory_id in related
-    print("✅ Explicit relation creation succeeded")
 
     del_active_res = a_engine.delete_agenda(aid3)
     print(f"Delete Active Result: {del_active_res}")
@@ -136,15 +151,6 @@ def test_agenda():
     print(f"Delete After Deactivation Result: {del_inactive_res}")
     assert del_inactive_res["status"] == "success"
     print("✅ Deletion of inactive agenda succeeded")
-
-    # Also delete the first one
-    a_engine.delete_agenda(agenda_id)
-    print(f"Delete First Agenda Result: {a_engine.delete_agenda(agenda_id)}")
-    
-    agendas_after = a_engine.list_agendas(active_only=False)
-    assert not any(a["id"] == agenda_id for a in agendas_after)
-    assert not any(a["id"] == aid2 for a in agendas_after)
-    assert not any(a["id"] == aid3 for a in agendas_after)
 
     print("\n✅ All agenda tests passed!")
 

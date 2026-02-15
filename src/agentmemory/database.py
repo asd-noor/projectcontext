@@ -27,24 +27,6 @@ DB_NAMES = {
     "agenda": "agenda.sqlite",
 }
 
-# def get_db_path() -> str:
-#     """Determine the database path (git root or current directory)."""
-#     dbdir = DB_DIR
-#     dbfile = DB_FILE
-#     try:
-#         # Use git to find the root directory
-#         git_root = (
-#             subprocess.check_output(
-#                 ["git", "rev-parse", "--show-toplevel"], stderr=subprocess.DEVNULL
-#             )
-#             .decode("utf-8")
-#             .strip()
-#         )
-#         return os.path.join(git_root, dbdir, dbfile)
-#     except (subprocess.CalledProcessError, FileNotFoundError):
-#         # Fallback to current working directory if not a git repo or git not found
-#         return os.path.join(os.getcwd(), dbdir, dbfile)
-
 
 def determine_db_dir() -> str:
     """Determine the database directory (git root or current directory)."""

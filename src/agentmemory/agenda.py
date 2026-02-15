@@ -29,13 +29,16 @@ class AgendaEngine:
         self._init_db()
 
     def _init_db(self):
-        """Initialize SQLite tables for agendas and tasks."""
+        """Initialize SQLite tables and FTS triggers."""
         with self.db:
+            # Main tables
             self.db.execute(
                 """
                 CREATE TABLE IF NOT EXISTS agendas (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     is_active INTEGER DEFAULT 1,
+                    title TEXT,
+                    description TEXT,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
                 """
@@ -54,27 +57,70 @@ class AgendaEngine:
                 )
                 """
             )
+
+            # Clean up old task FTS if it exists
+            self.db.execute("DROP TABLE IF EXISTS tasks_fts")
+
+            # Ensure agendas_fts exists with correct schema
+            fts_info = self.db.execute("PRAGMA table_info(agendas_fts)").fetchall()
+            columns = [c[1] for c in fts_info]
+            if "title" not in columns or not columns:
+                self.db.execute("DROP TABLE IF EXISTS agendas_fts")
+                self.db.execute(
+                    """
+                    CREATE VIRTUAL TABLE agendas_fts USING fts5(
+                        title,
+                        description,
+                        content='agendas',
+                        content_rowid='id'
+                    )
+                    """
+                )
+                # Initial population
+                self.db.execute(
+                    "INSERT INTO agendas_fts(rowid, title, description) SELECT id, title, description FROM agendas"
+                )
+
+            # Triggers to keep FTS in sync automatically
+            self.db.execute("DROP TRIGGER IF EXISTS agendas_ai")
             self.db.execute(
                 """
-                CREATE TABLE IF NOT EXISTS agenda_memory_relations (
-                    agenda_id INTEGER,
-                    memory_id INTEGER,
-                    PRIMARY KEY (agenda_id, memory_id),
-                    FOREIGN KEY(agenda_id) REFERENCES agendas(id) ON DELETE CASCADE
-                )
+                CREATE TRIGGER agendas_ai AFTER INSERT ON agendas BEGIN
+                    INSERT INTO agendas_fts(rowid, title, description) VALUES (new.id, new.title, new.description);
+                END
+                """
+            )
+            self.db.execute("DROP TRIGGER IF EXISTS agendas_ad")
+            self.db.execute(
+                """
+                CREATE TRIGGER agendas_ad AFTER DELETE ON agendas BEGIN
+                    INSERT INTO agendas_fts(agendas_fts, rowid, title, description) VALUES('delete', old.id, old.title, old.description);
+                END
+                """
+            )
+            self.db.execute("DROP TRIGGER IF EXISTS agendas_au")
+            self.db.execute(
+                """
+                CREATE TRIGGER agendas_au AFTER UPDATE ON agendas BEGIN
+                    INSERT INTO agendas_fts(agendas_fts, rowid, title, description) VALUES('delete', old.id, old.title, old.description);
+                    INSERT INTO agendas_fts(rowid, title, description) VALUES(new.id, new.title, new.description);
+                END
                 """
             )
 
-    def create_agenda(
-        self, tasks: List[dict], memory_ids: Optional[List[int]] = None
-    ) -> dict[str, Any]:
+    def create_agenda(self, tasks: List[dict], title: str = "", description: str = "") -> dict[str, Any]:
         """Create a new agenda with a list of tasks."""
         with self.db:
-            cur = self.db.execute("INSERT INTO agendas DEFAULT VALUES")
+            cur = self.db.execute(
+                "INSERT INTO agendas (title, description) VALUES (?, ?)",
+                (title, description)
+            )
             agenda_id = cur.lastrowid
 
             if agenda_id is None:
                 return {"status": "error", "message": "Failed to create agenda"}
+
+            # FTS is updated via Trigger
 
             for i, task in enumerate(tasks):
                 self.db.execute(
@@ -91,40 +137,24 @@ class AgendaEngine:
                     ),
                 )
 
-        if memory_ids:
-            relations = [(agenda_id, mid) for mid in memory_ids]
-            self.create_agenda_memory_relations(relations)
-
         return {"status": "success", "agenda_id": agenda_id}
-
-    def create_agenda_memory_relations(
-        self, relations: List[tuple[int, int]]
-    ) -> dict[str, Any]:
-        """Add relations between agendas and memories."""
-        with self.db:
-            self.db.executemany(
-                "INSERT OR IGNORE INTO agenda_memory_relations (agenda_id, memory_id) VALUES (?, ?)",
-                relations,
-            )
-        return {
-            "status": "success",
-            "message": f"Created {len(relations)} agenda-memory relations",
-        }
 
     def list_agendas(self, active_only: bool = True) -> List[dict[str, Any]]:
         """List all agendas."""
-        query = "SELECT id, is_active, created_at FROM agendas"
+        query = "SELECT id, is_active, title, description, created_at FROM agendas"
         if active_only:
             query += " WHERE is_active = 1"
 
         agendas = []
         cursor = self.db.execute(query)
         for row in cursor.fetchall():
-            agenda_id, is_active, created_at = row
+            agenda_id, is_active, title, description, created_at = row
             agendas.append(
                 {
                     "id": agenda_id,
                     "is_active": bool(is_active),
+                    "title": title,
+                    "description": description,
                     "created_at": created_at,
                 }
             )
@@ -134,13 +164,13 @@ class AgendaEngine:
     def get_agenda(self, agenda_id: int) -> dict[str, Any]:
         """Get a detailed agenda with its tasks."""
         agenda_row = self.db.execute(
-            "SELECT is_active, created_at FROM agendas WHERE id = ?", (agenda_id,)
+            "SELECT is_active, title, description, created_at FROM agendas WHERE id = ?", (agenda_id,)
         ).fetchone()
 
         if not agenda_row:
             return {"status": "error", "message": f"Agenda {agenda_id} not found"}
 
-        is_active, created_at = agenda_row
+        is_active, title, description, created_at = agenda_row
 
         tasks = []
         task_cursor = self.db.execute(
@@ -162,39 +192,11 @@ class AgendaEngine:
         return {
             "id": agenda_id,
             "is_active": bool(is_active),
+            "title": title,
+            "description": description,
             "created_at": created_at,
             "tasks": tasks,
         }
-
-    def get_agenda_related_memories(self, agenda_id: int) -> List[int]:
-        """Fetch memory IDs related to an agenda."""
-        memory_cursor = self.db.execute(
-            "SELECT memory_id FROM agenda_memory_relations WHERE agenda_id = ?",
-            (agenda_id,),
-        )
-        return [row[0] for row in memory_cursor.fetchall()]
-
-    def get_memory_related_agendas(self, memory_id: int) -> dict[str, List[int]]:
-        """Fetch agendas related to a memory, split by active status."""
-        cursor = self.db.execute(
-            """
-            SELECT a.id, a.is_active 
-            FROM agendas a
-            JOIN agenda_memory_relations r ON a.id = r.agenda_id
-            WHERE r.memory_id = ?
-            """,
-            (memory_id,),
-        )
-
-        active = []
-        past = []
-        for aid, is_active in cursor.fetchall():
-            if is_active:
-                active.append(aid)
-            else:
-                past.append(aid)
-
-        return {"active": active, "past": past}
 
     def update_task(self, task_id: int, is_completed: bool) -> dict[str, Any]:
         """Update a task's completion status."""
@@ -246,17 +248,33 @@ class AgendaEngine:
         agenda_id: int,
         is_active: Optional[bool] = None,
         new_tasks: Optional[List[dict]] = None,
+        title: Optional[str] = None,
+        description: Optional[str] = None,
     ) -> dict[str, Any]:
         """Update an agenda. Add tasks only if active. Mark inactive irreversibly."""
         with self.db:
             # Check if exists
             row = self.db.execute(
-                "SELECT is_active FROM agendas WHERE id = ?", (agenda_id,)
+                "SELECT is_active, title, description FROM agendas WHERE id = ?", (agenda_id,)
             ).fetchone()
             if not row:
                 return {"status": "error", "message": f"Agenda {agenda_id} not found"}
 
             current_is_active = bool(row[0])
+            current_title = row[1]
+            current_description = row[2]
+
+            # Update title/description
+            updated_title = title if title is not None else current_title
+            updated_description = description if description is not None else current_description
+            
+            if title is not None or description is not None:
+                self.db.execute(
+                    "UPDATE agendas SET title = ?, description = ? WHERE id = ?",
+                    (updated_title, updated_description, agenda_id)
+                )
+                # FTS updated via trigger
+
 
             # Mark as inactive if requested
             if is_active is False:
@@ -320,8 +338,25 @@ class AgendaEngine:
                     "status": "error",
                     "message": f"Cannot delete active agenda {agenda_id}. Mark it as inactive first.",
                 }
-
+            
             self.db.execute("DELETE FROM agendas WHERE id = ?", (agenda_id,))
-            # Tasks and relations are deleted via ON DELETE CASCADE
+            # FTS and tasks are cleaned up via Trigger and CASCADE
 
         return {"status": "success", "message": f"Agenda {agenda_id} deleted"}
+
+    def search_agendas(self, query: str, limit: int = 10) -> List[dict[str, Any]]:
+        """Search agendas by title or description."""
+        # Find matching agendas
+        agenda_matches = self.db.execute(
+            "SELECT rowid FROM agendas_fts WHERE agendas_fts MATCH ? ORDER BY rank LIMIT ?",
+            (query, limit)
+        ).fetchall()
+        
+        results = []
+        for (aid,) in agenda_matches:
+             # Fetch full agenda details
+             agenda = self.get_agenda(aid)
+             if "status" not in agenda: # if found
+                 results.append(agenda)
+        
+        return results

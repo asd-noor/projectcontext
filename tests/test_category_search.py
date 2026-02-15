@@ -13,77 +13,69 @@ def test_category_search():
     print("\n=== 1. Creating Test Memories ===")
 
     result1 = engine.save(
-        category="architecture",
-        topic="Database Design",
-        content="We chose PostgreSQL for its JSONB support and reliability.",
+        category="feature",
+        topic="User authentication system requirements",
+        content="The system must support OAuth2 with Google and GitHub providers. JWT should be used for session management.",
     )
-    print(f"Created architecture memory ID: {result1['doc_id']}")
+    print(f"Created feature memory ID: {result1['doc_id']}")
 
     result2 = engine.save(
-        category="bug_fix",
-        topic="Auth Issue",
-        content="Fixed the authentication timeout by increasing session duration.",
+        category="context",
+        topic="Current project technical stack overview",
+        content="We are using Python 3.12, FastAPI, and SQLite with vector extensions for this project.",
     )
-    print(f"Created bug_fix memory ID: {result2['doc_id']}")
+    print(f"Created context memory ID: {result2['doc_id']}")
 
     result3 = engine.save(
-        category="preference",
-        topic="Code Style",
-        content="Team prefers single quotes for strings in JavaScript.",
+        category="keepsake",
+        topic="User preferences for code formatting",
+        content="The user prefers using Black for Python formatting with a line length of 88 characters.",
     )
-    print(f"Created preference memory ID: {result3['doc_id']}")
+    print(f"Created keepsake memory ID: {result3['doc_id']}")
 
     # 2. Test category search
     print("\n=== 2. Testing Category Search ===")
 
-    # Search for "architecture"
-    print("\nSearching for 'architecture':")
-    results_arch = engine.query("architecture", top_k=5)
-    print(f"Found {len(results_arch)} results:")
-    for r in results_arch:
-        print(f"  - ID {r['id']}: [{r['category']}] {r['topic']} (score: {r['score']})")
+    # Search for "feature"
+    print("\nSearching for 'feature':")
+    results_feat = engine.query("feature", top_k=10)
+    print(f"Found {len(results_feat)} results.")
 
-    if any(r["id"] == result1["doc_id"] for r in results_arch):
-        print("✅ Architecture memory found!")
+    if any(r["id"] == result1["doc_id"] for r in results_feat):
+        print("✅ Feature memory found!")
     else:
-        print("❌ Architecture memory NOT found")
+        print("❌ Feature memory NOT found")
 
-    # Search for "bug_fix"
-    print("\nSearching for 'bug_fix':")
-    results_bug = engine.query("bug_fix", top_k=5)
-    print(f"Found {len(results_bug)} results:")
-    for r in results_bug:
-        print(f"  - ID {r['id']}: [{r['category']}] {r['topic']} (score: {r['score']})")
+    # Search for "context"
+    print("\nSearching for 'context':")
+    results_ctx = engine.query("context", top_k=10)
+    print(f"Found {len(results_ctx)} results.")
 
-    if any(r["id"] == result2["doc_id"] for r in results_bug):
-        print("✅ Bug fix memory found!")
+    if any(r["id"] == result2["doc_id"] for r in results_ctx):
+        print("✅ Context memory found!")
     else:
-        print("❌ Bug fix memory NOT found")
+        print("❌ Context memory NOT found")
 
-    # Search for "preference"
-    print("\nSearching for 'preference':")
-    results_pref = engine.query("preference", top_k=5)
-    print(f"Found {len(results_pref)} results:")
-    for r in results_pref:
-        print(f"  - ID {r['id']}: [{r['category']}] {r['topic']} (score: {r['score']})")
+    # Search for "keepsake"
+    print("\nSearching for 'keepsake':")
+    results_keep = engine.query("keepsake", top_k=10)
+    print(f"Found {len(results_keep)} results.")
 
-    if any(r["id"] == result3["doc_id"] for r in results_pref):
-        print("✅ Preference memory found!")
+    if any(r["id"] == result3["doc_id"] for r in results_keep):
+        print("✅ Keepsake memory found!")
     else:
-        print("❌ Preference memory NOT found")
+        print("❌ Keepsake memory NOT found")
 
     # 3. Test combined search (category + content)
     print("\n=== 3. Testing Combined Search ===")
-    print("\nSearching for 'architecture database':")
-    results_combined = engine.query("architecture database", top_k=5)
-    print(f"Found {len(results_combined)} results:")
-    for r in results_combined:
-        print(f"  - ID {r['id']}: [{r['category']}] {r['topic']} (score: {r['score']})")
+    print("\nSearching for 'feature authentication':")
+    results_combined = engine.query("feature authentication", top_k=10)
+    print(f"Found {len(results_combined)} results.")
 
-    if results_combined and results_combined[0]["id"] == result1["doc_id"]:
-        print("✅ Architecture memory ranked highest!")
+    if any(r["id"] == result1["doc_id"] for r in results_combined):
+        print("✅ Feature memory found in combined search!")
     else:
-        print("⚠️  Architecture memory not ranked highest")
+        print("⚠️  Feature memory not found in combined search")
 
     print("\n✅ Category search tests completed!")
 

@@ -6,6 +6,7 @@ A high-performance MCP (Model Context Protocol) server providing long-term memor
 
 - **Fast Semantic Search**: Uses `fastembed` with `BAAI/bge-small-en-v1.5` for fast startup and low memory usage
 - **Hybrid Search**: Combines keyword (FTS5) and vector search using Reciprocal Rank Fusion (RRF)
+- **Agenda Engine**: Task management with full-text search for plans and todo lists
 - **Persistent Storage**: SQLite-based storage with `sqlite-vec` extension
 - **Sub-200ms Queries**: Keep embedding model in memory for fast response times
 - **MCP Native**: Exposes `save_memory` and `query_memory` as native MCP tools
@@ -143,6 +144,127 @@ Update a memory by ID.
   }
   ```
   
+### `create_agenda`
+
+Create a new agenda (plan/todo list).
+
+**Arguments:**
+- `tasks` (list): List of task dicts (e.g. `[{ "details": "Task 1", "is_optional": false }]`)
+- `title` (string, optional): Agenda title
+- `description` (string, optional): Agenda description
+
+**Returns:**
+```json
+{
+  "status": "success",
+  "agenda_id": 1
+}
+```
+
+### `list_agendas`
+
+List all agendas.
+
+**Arguments:**
+- `active_only` (boolean, optional): If True, only show active agendas (default: True)
+
+**Returns:**
+```json
+[
+  {
+    "id": 1,
+    "is_active": true,
+    "title": "My Plan",
+    "description": "...",
+    "created_at": "..."
+  }
+]
+```
+
+### `get_agenda`
+
+Get detailed information about an agenda, including its tasks.
+
+**Arguments:**
+- `agenda_id` (integer): The ID of the agenda
+
+**Returns:**
+```json
+{
+  "id": 1,
+  "tasks": [...]
+}
+```
+
+### `search_agendas`
+
+Search agendas by title or description.
+
+**Arguments:**
+- `query` (string): Search query
+- `limit` (integer, optional): Max results (default: 10)
+
+**Returns:**
+```json
+[
+  {
+    "id": 1,
+    "title": "Matching Agenda",
+    ...
+  }
+]
+```
+
+### `update_task`
+
+Update a task's completion status.
+
+**Arguments:**
+- `task_id` (integer): The ID of the task
+- `is_completed` (boolean): True if finished
+
+**Returns:**
+```json
+{
+  "status": "success",
+  "message": "Task updated"
+}
+```
+
+### `update_agenda`
+
+Update an agenda's status, details, or add new tasks.
+
+**Arguments:**
+- `agenda_id` (integer): The ID of the agenda
+- `is_active` (boolean, optional): Set to False to deactivate
+- `new_tasks` (list, optional): List of new tasks to add
+- `title` (string, optional): New title
+- `description` (string, optional): New description
+
+**Returns:**
+```json
+{
+  "status": "success",
+  "message": "Agenda updated"
+}
+```
+
+### `delete_agenda`
+
+Delete an agenda and its associated tasks (must be inactive).
+
+**Arguments:**
+- `agenda_id` (integer): The ID of the agenda
+
+**Returns:**
+```json
+{
+  "status": "success",
+  "message": "Agenda 1 deleted"
+}
+```
+
   ## MCP Resources
 ### `memory://usage-guidelines`
 
@@ -199,6 +321,7 @@ query_memory(query="tech stack decisions")
 
 ### Database Schema
 
+#### Memory Engine (Hybrid Search)
 ```sql
 -- Main documents table
 CREATE TABLE docs (
@@ -223,13 +346,50 @@ CREATE VIRTUAL TABLE docs_vec USING vec0(
 );
 ```
 
+#### Agenda Engine (Task Management)
+```sql
+-- Main agendas table
+CREATE TABLE agendas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    is_active INTEGER DEFAULT 1,
+    title TEXT,
+    description TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tasks table
+CREATE TABLE tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agenda_id INTEGER,
+    task_order INTEGER,
+    is_optional INTEGER DEFAULT 0,
+    details TEXT,
+    acceptance_guard TEXT,
+    is_completed INTEGER DEFAULT 0,
+    FOREIGN KEY(agenda_id) REFERENCES agendas(id) ON DELETE CASCADE
+);
+
+-- Full-text search for agenda titles and descriptions
+CREATE VIRTUAL TABLE agendas_fts USING fts5(
+    title,
+    description,
+    content='agendas',
+    content_rowid='id'
+);
+```
+
 ### Storage Location
-The database is stored in `.ctxhub/memory.sqlite` in the git root directory (or current working directory if not in a git repo). This allows the memory to travel with the project while remaining hidden from version control.
+The databases are stored in the `.ctxhub/` directory in the git root (or current working directory).
+- `memory.sqlite`: Memory Engine database
+- `agenda.sqlite`: Agenda Engine database
+
+This allows the memory to travel with the project while remaining hidden from version control.
 
 ## Performance
 
-- **First Query**: ~500ms (model initialization + query)
-- **Subsequent Queries**: <200ms (model kept in memory)
+- **First Query (Memory)**: ~500ms (model initialization + query)
+- **Subsequent Queries (Memory)**: <200ms (model kept in memory)
+- **Agenda Queries**: <50ms (SQLite FTS5)
 - **Embedding Model Size**: ~133MB (BAAI/bge-small-en-v1.5)
 - **Memory Usage**: ~200MB base + model
 
@@ -242,10 +402,12 @@ agentmemory/
 ├── src/
 │   └── agentmemory/
 │       ├── __init__.py
-│       └── server.py       # MCP server implementation
-├── pyproject.toml          # Project configuration
-└── .agent-memory/
-    └── db.sqlite           # Persistent database (in git root)
+│       ├── agenda.py        # Agenda Engine
+│       ├── database.py      # DB Utilities
+│       ├── memory.py        # Memory Engine
+│       └── server.py        # MCP Server
+├── pyproject.toml
+└── .ctxhub/                 # Databases
 ```
 
 ### Testing

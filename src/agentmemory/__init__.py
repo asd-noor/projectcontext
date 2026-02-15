@@ -12,12 +12,10 @@ from agentmemory.server import (
     create_agenda,
     list_agendas,
     get_agenda,
-    create_agenda_memory_relations,
-    get_agenda_related_memories,
-    get_memory_related_agendas,
     update_task,
     update_agenda,
     delete_agenda,
+    search_agendas,
 )
 
 __all__ = [
@@ -30,4 +28,5 @@ __all__ = [
     "update_task",
     "update_agenda",
     "delete_agenda",
+    "search_agendas",
 ]

@@ -34,56 +34,89 @@ class MemoryEngine:
         self.db = sqlite3.connect(get_memory_db_path(), check_same_thread=False)
         self.db.enable_load_extension(True)
         sqlite_vec.load(self.db)
-        self._init_db()
-        # Initialize fastembed model once at startup
+        
+        # Initialize fastembed model first to allow backfilling during _init_db
         self.model = TextEmbedding(model_name=MODEL_NAME)
+        
+        self._init_db()
 
     def _init_db(self):
-        """Initialize SQLite tables with FTS5 and vec0 extensions."""
+        """Initialize SQLite tables and ensure indices are synced."""
         with self.db:
+            # Main table
             self.db.execute(
                 "CREATE TABLE IF NOT EXISTS docs (id INTEGER PRIMARY KEY, category TEXT, topic TEXT, content TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)"
             )
-            self.db.execute(
-                "CREATE VIRTUAL TABLE IF NOT EXISTS docs_fts USING fts5(category, topic, content, content='docs', content_rowid='id')"
-            )
-            self.db.execute(
-                "CREATE VIRTUAL TABLE IF NOT EXISTS docs_vec USING vec0(id INTEGER PRIMARY KEY, embedding float[384])"
-            )
 
             # Check if FTS table exists and has correct schema
-            cursor = self.db.execute(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name='docs_fts'"
-            )
-            fts_exists = cursor.fetchone() is not None
-
-            if fts_exists:
-                # Check if category column exists in FTS
-                cursor = self.db.execute("PRAGMA table_info(docs_fts)")
-                columns = [row[1] for row in cursor.fetchall()]
-                if "category" not in columns:
-                    # Migration needed: rebuild FTS with category
-                    self.db.execute("DROP TABLE IF EXISTS docs_fts")
-                    fts_exists = False
-
-            if not fts_exists:
+            fts_info = self.db.execute("PRAGMA table_info(docs_fts)").fetchall()
+            columns = [c[1] for c in fts_info]
+            
+            if "category" not in columns or not columns:
+                self.db.execute("DROP TABLE IF EXISTS docs_fts")
                 self.db.execute(
-                    "CREATE VIRTUAL TABLE IF NOT EXISTS docs_fts USING fts5(category, topic, content, content='docs', content_rowid='id')"
+                    "CREATE VIRTUAL TABLE docs_fts USING fts5(category, topic, content, content='docs', content_rowid='id')"
                 )
-                # Rebuild FTS index from existing data if docs table has data
-                cursor = self.db.execute(
-                    "SELECT id, category, topic, content FROM docs"
+                # Rebuild FTS index from existing data
+                self.db.execute(
+                    "INSERT INTO docs_fts (rowid, category, topic, content) SELECT id, category, topic, content FROM docs"
                 )
-                for row in cursor.fetchall():
-                    doc_id, category, topic, content = row
-                    self.db.execute(
-                        "INSERT INTO docs_fts (rowid, category, topic, content) VALUES (?, ?, ?, ?)",
-                        (doc_id, category, topic, content),
-                    )
 
+            # Vector table
             self.db.execute(
                 "CREATE VIRTUAL TABLE IF NOT EXISTS docs_vec USING vec0(id INTEGER PRIMARY KEY, embedding float[384])"
             )
+
+            # Triggers to keep FTS in sync automatically
+            self.db.execute("DROP TRIGGER IF EXISTS docs_ai")
+            self.db.execute(
+                """
+                CREATE TRIGGER docs_ai AFTER INSERT ON docs BEGIN
+                    INSERT INTO docs_fts(rowid, category, topic, content) VALUES (new.id, new.category, new.topic, new.content);
+                END
+                """
+            )
+            self.db.execute("DROP TRIGGER IF EXISTS docs_ad")
+            self.db.execute(
+                """
+                CREATE TRIGGER docs_ad AFTER DELETE ON docs BEGIN
+                    INSERT INTO docs_fts(docs_fts, rowid, category, topic, content) VALUES('delete', old.id, old.category, old.topic, old.content);
+                END
+                """
+            )
+            self.db.execute("DROP TRIGGER IF EXISTS docs_au")
+            self.db.execute(
+                """
+                CREATE TRIGGER docs_au AFTER UPDATE ON docs BEGIN
+                    INSERT INTO docs_fts(docs_fts, rowid, category, topic, content) VALUES('delete', old.id, old.category, old.topic, old.content);
+                    INSERT INTO docs_fts(rowid, category, topic, content) VALUES(new.id, new.category, new.topic, new.content);
+                END
+                """
+            )
+
+            # Trigger to clean up vector index automatically on deletion
+            self.db.execute("DROP TRIGGER IF EXISTS docs_vec_ad")
+            self.db.execute(
+                """
+                CREATE TRIGGER docs_vec_ad AFTER DELETE ON docs BEGIN
+                    DELETE FROM docs_vec WHERE id = old.id;
+                END
+                """
+            )
+
+            # Vector Backfilling: Ensure all docs have embeddings
+            cursor = self.db.execute(
+                "SELECT id, content FROM docs WHERE id NOT IN (SELECT id FROM docs_vec)"
+            )
+            missing = cursor.fetchall()
+            if missing:
+                for doc_id, content in missing:
+                    embedding_list = list(self.model.embed([content]))
+                    embedding = embedding_list[0].tolist()
+                    self.db.execute(
+                        "INSERT INTO docs_vec (id, embedding) VALUES (?, ?)",
+                        (doc_id, sqlite_vec.serialize_float32(embedding)),
+                    )
 
     def save(self, category: str, topic: str, content: str) -> dict[str, Any]:
         """Save a memory with category, topic, and content."""
@@ -97,10 +130,7 @@ class MemoryEngine:
                 (category, topic, content),
             )
             doc_id = cur.lastrowid
-            self.db.execute(
-                "INSERT INTO docs_fts (rowid, category, topic, content) VALUES (?, ?, ?, ?)",
-                (doc_id, category, topic, content),
-            )
+            # FTS is updated via Trigger
             self.db.execute(
                 "INSERT INTO docs_vec (id, embedding) VALUES (?, ?)",
                 (doc_id, sqlite_vec.serialize_float32(embedding)),
@@ -139,20 +169,11 @@ class MemoryEngine:
             new_topic = topic if topic is not None else current_topic
             new_content = content if content is not None else current_content
 
-            # Update docs table
+            # Update docs table - triggers will handle FTS
             self.db.execute(
                 "UPDATE docs SET category = ?, topic = ?, content = ? WHERE id = ?",
                 (new_category, new_topic, new_content, doc_id),
             )
-
-            # Update FTS if topic or content changed
-            if category is not None or topic is not None or content is not None:
-                # FTS update is typically a DELETE + INSERT to ensure consistency
-                self.db.execute("DELETE FROM docs_fts WHERE rowid = ?", (doc_id,))
-                self.db.execute(
-                    "INSERT INTO docs_fts (rowid, category, topic, content) VALUES (?, ?, ?, ?)",
-                    (doc_id, new_category, new_topic, new_content),
-                )
 
             # Update Vector if content changed
             if content is not None:
@@ -185,10 +206,8 @@ class MemoryEngine:
                     "message": f"Memory with ID {doc_id} not found",
                 }
 
-            # Delete from all tables
+            # Delete from main table - triggers handle FTS and Vector cleanup
             self.db.execute("DELETE FROM docs WHERE id = ?", (doc_id,))
-            self.db.execute("DELETE FROM docs_fts WHERE rowid = ?", (doc_id,))
-            self.db.execute("DELETE FROM docs_vec WHERE id = ?", (doc_id,))
 
         return {"status": "success", "message": f"Memory {doc_id} deleted"}
 

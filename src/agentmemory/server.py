@@ -158,21 +158,24 @@ def query_memory(query: str, top_k: int = 3) -> list[dict[str, Any]]:
 
 @mcp.tool()
 def create_agenda(
-    tasks: list[dict[str, Any]], memory_ids: list[int] | None = None
+    tasks: list[dict[str, Any]],
+    title: str = "",
+    description: str = "",
 ) -> dict[str, Any]:
     """Create a new agenda (plan/todo list).
 
     Args:
         tasks: List of task dicts. Each task should have:
-            - description: str (required)
+            - details: str (required)
             - is_optional: bool (optional, default False)
             - acceptance_guard: str (optional)
-        memory_ids: Optional list of memory IDs to relate to this agenda
+        title: Optional title for the agenda
+        description: Optional description for the agenda
 
     Returns:
         A dictionary with status and agenda_id
     """
-    return agenda_engine.create_agenda(tasks, memory_ids)
+    return agenda_engine.create_agenda(tasks, title, description)
 
 
 @mcp.tool()
@@ -202,44 +205,17 @@ def get_agenda(agenda_id: int) -> dict[str, Any]:
 
 
 @mcp.tool()
-def create_agenda_memory_relations(
-    relations: list[tuple[int, int]]
-) -> dict[str, Any]:
-    """Link agendas to memories.
+def search_agendas(query: str, limit: int = 10) -> list[dict[str, Any]]:
+    """Search agendas by title or description.
 
     Args:
-        relations: List of (agenda_id, memory_id) tuples
+        query: The search query string
+        limit: Maximum number of results to return (default: 10)
 
     Returns:
-        A dictionary with status and message
+        A list of matching agendas
     """
-    return agenda_engine.create_agenda_memory_relations(relations)
-
-
-@mcp.tool()
-def get_agenda_related_memories(agenda_id: int) -> list[int]:
-    """Get all memory IDs related to a specific agenda.
-
-    Args:
-        agenda_id: The ID of the agenda
-
-    Returns:
-        A list of related memory IDs
-    """
-    return agenda_engine.get_agenda_related_memories(agenda_id)
-
-
-@mcp.tool()
-def get_memory_related_agendas(memory_id: int) -> dict[str, list[int]]:
-    """Get all agendas related to a specific memory, split by active/past.
-
-    Args:
-        memory_id: The ID of the memory
-
-    Returns:
-        A dict with 'active' and 'past' agenda ID lists
-    """
-    return agenda_engine.get_memory_related_agendas(memory_id)
+    return agenda_engine.search_agendas(query, limit)
 
 
 @mcp.tool()
@@ -263,18 +239,22 @@ def update_agenda(
     agenda_id: int,
     is_active: bool | None = None,
     new_tasks: list[dict[str, Any]] | None = None,
+    title: str | None = None,
+    description: str | None = None,
 ) -> dict[str, Any]:
-    """Update an agenda's status or add new tasks.
+    """Update an agenda's status, details, or add new tasks.
 
     Args:
         agenda_id: The ID of the agenda to update
         is_active: Set to False to deactivate the agenda (irreversible).
         new_tasks: Optional list of new task dicts to add (only if agenda is active).
+        title: New title (optional)
+        description: New description (optional)
 
     Returns:
         A dictionary with status and message
     """
-    return agenda_engine.update_agenda(agenda_id, is_active, new_tasks)
+    return agenda_engine.update_agenda(agenda_id, is_active, new_tasks, title, description)
 
 
 @mcp.tool()

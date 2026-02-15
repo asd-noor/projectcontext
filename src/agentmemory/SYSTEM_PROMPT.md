@@ -1,7 +1,15 @@
-# Memory Engine MCP Server - Usage Guidelines for AI Agents
+# Agent Memory & Agenda MCP Server - Usage Guidelines
 
 ## Purpose
-This MCP server provides long-term persistent memory storage for AI assistants. Use it to remember important context across conversations, store decisions, and recall relevant information when needed.
+This MCP server provides two core engines for AI assistants:
+1. **Memory Engine**: Long-term persistent memory storage for project context, decisions, and preferences.
+2. **Agenda Engine**: Task management system to create, track, and manage multi-step plans and todo lists.
+
+---
+
+## Part 1: Memory Engine
+
+(Sections for Memory Engine follow...)
 
 ## When to Save Memories
 
@@ -349,7 +357,85 @@ if results:
         update_memory(doc_id=memory['id'], content="Current info: ...")
 ```
 
-## Summary
+---
+
+## Part 2: Agenda Engine
+
+### Purpose
+The Agenda Engine allows AI agents to manage complex, multi-step workflows. Use it to:
+- Create structured plans for achieving user goals.
+- Track the progress of long-running tasks.
+- Maintain a persistent "todo list" that carries over between sessions.
+- Document acceptance criteria for individual steps.
+
+### When to Use Agendas
+- **Multi-step migrations**: e.g., "Move from Flask to FastAPI".
+- **Feature implementation**: Breaking down a complex PR into smaller tasks.
+- **Project milestones**: Tracking high-level progress.
+- **System maintenance**: Scheduled tasks or cleanup activities.
+
+### How to Structure Agendas
+
+#### Agenda Level
+- **Title**: Short, descriptive name (e.g., "Refactor Auth System").
+- **Description**: Detailed overview of the goal and context. This field is indexed for full-text search.
+
+#### Task Level
+- **Details**: Specific instruction for this step.
+- **Is Optional**: Set to `True` for tasks that are nice-to-have but don't block the agenda's completion.
+- **Acceptance Guard**: Clear criteria/checks to verify the task is done (e.g., "Tests pass and coverage > 80%").
+
+### How to Manage Agendas
+
+#### 1. Create a Plan
+Break down the goal into actionable tasks:
+```python
+create_agenda(
+    title="Implement Vector Backfilling",
+    description="Add a mechanism to ensure all memories have embeddings at startup.",
+    tasks=[
+        {"details": "Add model initialization before DB init", "is_optional": False},
+        {"details": "Implement backfill loop in _init_db", "is_optional": False, "acceptance_guard": "Check for missing IDs in docs_vec"},
+        {"details": "Add tests for backfilling logic", "is_optional": True}
+    ]
+)
+```
+
+#### 2. Track Progress
+Update tasks as you complete them. The agenda will **automatically de-activate** once all non-optional tasks are finished.
+```python
+# Mark a task as completed
+update_task(task_id=123, is_completed=True)
+```
+
+#### 3. Update or Expand
+You can add tasks to an active agenda or update its metadata:
+```python
+update_agenda(
+    agenda_id=1,
+    new_tasks=[{"details": "Add logging to backfill loop"}],
+    description="Updated: Including logging for better observability."
+)
+```
+
+#### 4. Search and Retrieval
+Search for existing plans by their description:
+```python
+# Find plans related to migrations
+search_agendas("migration from flask")
+```
+
+### Best Practices
+
+1. **Be Specific in Descriptions**: Since search is description-based, include relevant keywords (frameworks, module names, etc.).
+2. **Use Acceptance Guards**: These serve as a "Definition of Done" for the AI, reducing ambiguity.
+3. **Keep it Active**: Only keep relevant agendas active. Use `update_agenda(is_active=False)` to manually retire a plan if it's no longer needed.
+4. **Link with Memories**: Reference relevant memory IDs in your agenda descriptions for better context linkage.
+5. **Clean Up**: Delete inactive agendas if they are no longer useful for historical reference.
+
+---
+
+## Part 3: General Summary
 
 **Key Points:**
 1. Use descriptive categories (they're searchable!)
