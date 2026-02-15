@@ -22,8 +22,8 @@ A long-running MCP server that provides semantic and keyword search for long-ter
 import os
 from typing import Any
 from mcp.server.fastmcp import FastMCP
-from .memory import MemoryEngine
-from .agenda import AgendaEngine
+from agentmemory.memory import MemoryEngine
+from agentmemory.agenda import AgendaEngine
 
 # Initialize FastMCP server
 mcp = FastMCP("MemoryEngine")
@@ -51,40 +51,8 @@ def get_usage_guidelines() -> str:
         The complete usage guidelines as markdown text
     """
     guidelines_path = os.path.join(os.path.dirname(__file__), "SYSTEM_PROMPT.md")
-    try:
-        with open(guidelines_path, "r", encoding="utf-8") as f:
-            return f.read()
-    except FileNotFoundError:
-        # Fallback if file is not found
-        return """# Memory Engine Usage Guidelines
-
-## Quick Start
-
-### When to Save Memories
-- Architecture decisions and technical choices
-- User preferences (code style, conventions)
-- Bug fixes and their root causes
-- Important project context
-
-### How to Structure
-- **category**: Use descriptive names like "architecture", "preference", "bug_fix"
-- **topic**: Short title (3-10 words)
-- **content**: Detailed information with context
-
-### How to Query
-- Use natural language: "What database are we using?"
-- Search by category: "architecture decisions"
-- All fields (category, topic, content) are searchable
-
-### Best Practices
-1. Query before saving to avoid duplicates
-2. Update existing memories instead of creating duplicates
-3. Use consistent category names
-4. Make content searchable with relevant keywords
-5. Delete outdated information
-
-For complete documentation, see SYSTEM_PROMPT.md in the repository.
-"""
+    with open(guidelines_path, "r", encoding="utf-8") as f:
+        return f.read()
 
 
 # --- MCP Tools ---
@@ -254,7 +222,9 @@ def update_agenda(
     Returns:
         A dictionary with status and message
     """
-    return agenda_engine.update_agenda(agenda_id, is_active, new_tasks, title, description)
+    return agenda_engine.update_agenda(
+        agenda_id, is_active, new_tasks, title, description
+    )
 
 
 @mcp.tool()

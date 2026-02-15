@@ -18,7 +18,7 @@
 
 import sqlite3
 from typing import Any, List, Optional
-from .database import get_agenda_db_path
+from agentmemory.database import get_agenda_db_path
 
 
 class AgendaEngine:

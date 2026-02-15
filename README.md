@@ -401,11 +401,11 @@ This allows the memory to travel with the project while remaining hidden from ve
 agentmemory/
 ├── src/
 │   └── agentmemory/
-│       ├── __init__.py
-│       ├── agenda.py        # Agenda Engine
-│       ├── database.py      # DB Utilities
+│       ├── __init__.py      # Package initialization
+│       ├── server.py        # MCP Server
 │       ├── memory.py        # Memory Engine
-│       └── server.py        # MCP Server
+│       ├── agenda.py        # Agenda Engine
+│       └── database.py      # Database Utilities
 ├── pyproject.toml
 └── .ctxhub/                 # Databases
 ```

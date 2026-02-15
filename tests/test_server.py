@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Test script for Memory MCP Server"""
 
-from agentmemory.server import MemoryEngine
+from agentmemory.memory import MemoryEngine
 
 
 def test_save_and_query():

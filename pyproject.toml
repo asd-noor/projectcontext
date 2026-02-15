@@ -1,6 +1,6 @@
 [project]
 name = "agentmemory"
-version = "1.0.0"
+version = "2.0.0"
 description = "agentmemory - MCP Server for long-term memory storage with semantic and keyword search"
 readme = "README.md"
 license = { text = "GPL-3.0-or-later" }
@@ -17,6 +17,11 @@ dependencies = [
 
 [project.scripts]
 agentmemory = "agentmemory.server:main"
+
+[tool.uv]
+package = true
+
+[tool.uv.sources]
 
 [build-system]
 requires = ["uv_build>=0.9.28,<0.10.0"]
