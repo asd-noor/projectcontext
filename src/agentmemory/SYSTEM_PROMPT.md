@@ -6,13 +6,11 @@ This MCP server provides long-term persistent memory storage for AI assistants. 
 ## When to Save Memories
 
 ### ✅ DO Save:
-- **Architecture decisions**: Technical choices, library selections, design patterns
-- **User preferences**: Code style, naming conventions, workflow preferences
+- **Architecture decisions**: Technical choices, library selections, design patterns, code style, project constraints, decisions on picking approaches/tools with reasoning
+- **Project context**: Key files, important functions, system behavior, development status summaries, insights gained during problem-solving
+- **Feature development**: New features specifications and requirements
 - **Bug fixes**: Root causes and solutions for issues encountered
-- **Project context**: Key files, important functions, system behavior
-- **Decisions made**: Why certain approaches were chosen over alternatives
-- **Important facts**: User-specific information, project constraints, requirements
-- **Learnings**: Insights gained during problem-solving
+- **Important facts**: Information collected from user or other sources
 
 ### ❌ DON'T Save:
 - Temporary conversation details
@@ -25,13 +23,11 @@ This MCP server provides long-term persistent memory storage for AI assistants. 
 
 ### Category
 Choose descriptive categories that help with search and organization:
-- `architecture` - System design, tech stack, patterns
-- `preference` - User preferences, code style, conventions
+- `architecture` - System design, tech stack, patterns, constraints
 - `bug_fix` - Bug descriptions and solutions
 - `feature` - Feature specifications and requirements
-- `decision` - Important choices and rationales
-- `context` - Project-specific context
-- `learning` - Insights and lessons learned
+- `context` - Project-specific context, insights and summaries of important development checkpoints
+- `keepsake` - Gathered information from user or other sources
 
 **Tip**: Categories are searchable! Users can search by category name.
 
@@ -94,14 +90,9 @@ Results include:
 - `topic`: Short title
 - `content`: Full details
 - `timestamp`: When the memory was originally saved
-- `last_verified`: When the memory was last confirmed as accurate
 - `score`: Relevance score (higher = better match)
 
 Results are ranked by relevance using hybrid search (keyword + semantic).
-
-**Important: Check `last_verified` timestamp!**
-- If `last_verified` is old (>1 month), verify the information before using it
-- Use `verify_memory(doc_id)` to update the timestamp after confirming accuracy
 
 ## Best Practices
 
@@ -193,24 +184,6 @@ if results:
         doc_id=memory['id'],
         content=memory['content'] + "\n\nUpdate 2024-02-05: Upgraded to PostgreSQL 15 for better JSON performance."
     )
-```
-
-### Pattern 5: Verify Memory After Checking Code
-```python
-# Query memory
-results = query_memory("authentication flow")
-if results:
-    memory = results[0]
-    
-    # Check if it's old
-    if memory['last_verified'] < "2024-01-01":
-        # Read actual code to verify
-        # ... check authentication code ...
-        
-        # If still accurate, mark as verified
-        verify_memory(doc_id=memory['id'])
-        # If outdated, update it
-        # update_memory(doc_id=memory['id'], content="...")
 ```
 
 ## Search Features
@@ -357,20 +330,20 @@ results = query_memory("database configuration")
 # 2. Check the result
 if results:
     memory = results[0]
-    
+
     # Check timestamp
     if memory['timestamp'] < "2024-01-01":
         # Old memory - verify with user
         print("⚠️  Found old memory, verifying...")
-    
+
     # Check score
     if memory['score'] < 0.02:
         # Weak match - might be false positive
         print("⚠️  Low relevance score, double-checking...")
-    
+
     # 3. Cross-reference with actual code
     # Read database config files to verify
-    
+
     # 4. If outdated, update it
     if outdated:
         update_memory(doc_id=memory['id'], content="Current info: ...")

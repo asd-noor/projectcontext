@@ -1,0 +1,8 @@
+[settings]
+python.uv_venv_auto = "source"
+
+[tools]
+uv = "0.9.28"
+
+[env]
+_.python.venv = { path = ".venv" }

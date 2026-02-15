@@ -5,6 +5,29 @@ A long-running MCP server that provides semantic and keyword search for long-ter
 
 __version__ = "0.1.0"
 
-from agentmemory.server import main, save_memory, query_memory
+from agentmemory.server import (
+    main,
+    save_memory,
+    query_memory,
+    create_agenda,
+    list_agendas,
+    get_agenda,
+    create_agenda_memory_relations,
+    get_agenda_related_memories,
+    get_memory_related_agendas,
+    update_task,
+    update_agenda,
+    delete_agenda,
+)
 
-__all__ = ["main", "save_memory", "query_memory"]
+__all__ = [
+    "main",
+    "save_memory",
+    "query_memory",
+    "create_agenda",
+    "list_agendas",
+    "get_agenda",
+    "update_task",
+    "update_agenda",
+    "delete_agenda",
+]

@@ -102,13 +102,10 @@ Query memories using semantic and keyword search.
     "topic": "Example Topic",
     "content": "Detailed content...",
     "timestamp": "2024-02-04 13:22:00",
-    "last_verified": "2024-02-04 13:22:00",
     "score": 0.8542
   }
 ]
 ```
-
-**Note:** `last_verified` indicates when the memory was last confirmed as accurate. Use `verify_memory` to update this timestamp.
 
 ### `delete_memory`
 
@@ -142,35 +139,11 @@ Update a memory by ID.
   "doc_id": 123,
   "topic": "Updated Topic",
   "category": "updated_category",
-  "message": "Memory updated"
-}
-```
-
-### `verify_memory`
-
-Mark a memory as verified by updating its `last_verified` timestamp to now.
-
-**Use this when:**
-- You've confirmed a memory is still accurate
-- You've checked information against current code
-- You want to prevent hallucinations from stale data
-
-**Arguments:**
-- `doc_id` (integer): The ID of the memory to verify
-
-**Returns:**
-```json
-{
-  "status": "success",
-  "doc_id": 123,
-  "message": "Memory verified and timestamp updated"
-}
-```
-
-**Note:** This helps track memory freshness. Memories with old `last_verified` timestamps should be treated with caution.
-
-## MCP Resources
-
+      "message": "Memory updated"
+  }
+  ```
+  
+  ## MCP Resources
 ### `memory://usage-guidelines`
 
 Provides comprehensive usage guidelines for AI agents using the memory system.
@@ -210,12 +183,6 @@ query_memory(query="tech stack decisions")
 # Returns: [Database Choice, Python version requirements, etc.]
 ```
 
-### Preventing Stale Data
-**Agent:** "I just verified that the Python version requirement is still 3.12."
-```python
-verify_memory(doc_id=123)
-```
-
 ## Architecture
 
 ### Technology Stack
@@ -239,8 +206,7 @@ CREATE TABLE docs (
   category TEXT,
   topic TEXT,
   content TEXT,
-  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-  last_verified DATETIME DEFAULT CURRENT_TIMESTAMP
+  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Full-text search index
@@ -292,7 +258,6 @@ The project includes a comprehensive test suite.
 
 # Run specific tests manually
 uv run python tests/test_server.py
-uv run python tests/test_freshness.py
 uv run python tests/test_updates.py
 ```
 
