@@ -1,7 +1,7 @@
 [project]
-name = "agentmemory"
-version = "2.0.0"
-description = "agentmemory - MCP Server for long-term memory storage with semantic and keyword search"
+name = "projectcontext"
+version = "1.0.0"
+description = "projectcontext - MCP Server for long-term memory storage with semantic and keyword search for context and agendas"
 readme = "README.md"
 license = { text = "GPL-3.0-or-later" }
 authors = [
@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.scripts]
-agentmemory = "agentmemory.server:main"
+projectcontext = "projectcontext.server:main"
 
 [tool.uv]
 package = true

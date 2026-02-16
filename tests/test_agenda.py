@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Test script for Agenda functionality"""
 
-from agentmemory.agenda import AgendaEngine
+from projectcontext.agenda import AgendaEngine
 
 
 def test_agenda():

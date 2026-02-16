@@ -20,7 +20,7 @@ import sqlite3
 import sqlite_vec
 from typing import Any
 from fastembed import TextEmbedding
-from agentmemory.database import get_memory_db_path
+from projectcontext.database import get_memory_db_path
 
 MODEL_NAME = "BAAI/bge-small-en-v1.5"  # 384-dim model
 

@@ -17,7 +17,7 @@ This MCP server provides two core engines for AI assistants:
 - **Architecture decisions**: Technical choices, library selections, design patterns, code style, project constraints, decisions on picking approaches/tools with reasoning
 - **Project context**: Key files, important functions, system behavior, development status summaries, insights gained during problem-solving
 - **Feature development**: New features specifications and requirements
-- **Bug fixes**: Root causes and solutions for issues encountered
+- **Bug fixes and Hot fixes**: Root causes and solutions for issues encountered
 - **Important facts**: Information collected from user or other sources
 
 ### ❌ DON'T Save:
@@ -32,7 +32,7 @@ This MCP server provides two core engines for AI assistants:
 ### Category
 Choose descriptive categories that help with search and organization:
 - `architecture` - System design, tech stack, patterns, constraints
-- `bug_fix` - Bug descriptions and solutions
+- `fix` - Bug descriptions and solutions
 - `feature` - Feature specifications and requirements
 - `context` - Project-specific context, insights and summaries of important development checkpoints
 - `keepsake` - Gathered information from user or other sources
@@ -70,7 +70,7 @@ Decision made: 2024-02-04
 ### Query Strategies
 
 1. **Natural language**: "What database are we using?"
-2. **Category search**: "architecture decisions" or "bug_fix authentication"
+2. **Category search**: "architecture decisions" or "fix authentication"
 3. **Keyword search**: "PostgreSQL" or "user preferences"
 4. **Semantic search**: The system understands related concepts
 
@@ -175,7 +175,7 @@ save_memory(
 ### Pattern 3: Save Bug Fix Context
 ```python
 save_memory(
-    category="bug_fix",
+    category="fix",
     topic="Memory leak in WebSocket handler",
     content="Root cause: WebSocket connections weren't properly closed on error. Solution: Added explicit close() in finally block. Affects files: server.py, websocket_handler.py. Fixed: 2024-02-04."
 )

@@ -22,8 +22,8 @@ A long-running MCP server that provides semantic and keyword search for long-ter
 import os
 from typing import Any
 from mcp.server.fastmcp import FastMCP
-from agentmemory.memory import MemoryEngine
-from agentmemory.agenda import AgendaEngine
+from projectcontext.memory import MemoryEngine
+from projectcontext.agenda import AgendaEngine
 
 # Initialize FastMCP server
 mcp = FastMCP("MemoryEngine")
@@ -63,7 +63,7 @@ def save_memory(category: str, topic: str, content: str) -> dict[str, Any]:
     """Save a memory to the long-term storage.
 
     Args:
-        category: The category of the memory (e.g., "architecture", "preference", "bug_fix")
+        category: The category of the memory (e.g., "architecture", "preference", "fix")
         topic: A short descriptive title for the memory
         content: The detailed memory/decision text
 
@@ -238,6 +238,89 @@ def delete_agenda(agenda_id: int) -> dict[str, Any]:
         A dictionary with status and message
     """
     return agenda_engine.delete_agenda(agenda_id)
+
+
+# --- MCP Prompts ---
+
+
+@mcp.prompt()
+def setup_project_context() -> str:
+    """Template for initializing a new project with technical stack, goals, and conventions."""
+    return (
+        "I need to set up the context for a new project.\n\n"
+        "First, please use `query_memory` to check if any context already exists for this project to avoid duplicates.\n"
+        "If not, use `save_memory` to record the following sections using standard categories:\n"
+        "1. Technical Stack (Category: 'architecture', Topic: 'Tech Stack')\n"
+        "2. Project Goals (Category: 'context', Topic: 'Goals')\n"
+        "3. Coding Conventions (Category: 'architecture', Topic: 'Conventions')\n"
+        "\n"
+        "For each entry, ensure the content explains the 'why' behind choices and includes specific technical details as per established best practices."
+    )
+
+
+@mcp.prompt()
+def plan_feature_implementation() -> str:
+    """Guides the model to break down a feature into a structured agenda with acceptance criteria."""
+    return (
+        "I want to implement a new feature. Please follow this structured workflow:\n"
+        "1. **Search**: Use `query_memory` to find related architecture patterns, project constraints, or similar feature specs.\n"
+        "2. **Analyze**: Review the search results and cross-reference with the current codebase to ensure information is up-to-date.\n"
+        "3. **Plan**: Create a detailed plan using `create_agenda`.\n"
+        "   - Include relevant memory IDs in the agenda description for context linkage.\n"
+        "   - Every task must have a specific `acceptance_guard` (Definition of Done).\n"
+        "4. **Execute**: Break the feature into actionable tasks, marking non-critical steps as `is_optional`."
+    )
+
+
+@mcp.prompt()
+def summarize_and_remember(context: str) -> str:
+    """Summarize a conversation or technical discussion and save it to memory.
+
+    Args:
+        context: The text or conversation history to summarize.
+    """
+    return (
+        f"Please analyze the following context and extract key decisions, preferences, or architectural details:\n\n"
+        f"{context}\n\n"
+        "Then, for each key point identified:\n"
+        "1. **Avoid Duplicates**: Use `query_memory` to see if a memory on this topic already exists.\n"
+        "2. **Categorize**: Use standard categories (`architecture`, `fix`, `feature`, `context`, `keepsake`).\n"
+        "3. **Store**: \n"
+        "   - If it's a new insight, use `save_memory` with a descriptive topic (3-10 words).\n"
+        "   - If it updates existing info, use `update_memory` with the existing ID to prevent hallucinations and maintain a single source of truth.\n"
+        "4. **Detail**: Ensure the content explains the 'why' and includes technical specifics."
+    )
+
+
+@mcp.prompt()
+def debug_with_history(bug_description: str) -> str:
+    """Workflow for debugging issues using past bug fix memories and system context.
+
+    Args:
+        bug_description: Description of the current issue.
+    """
+    return (
+        f"I am encountering the following issue:\n\n{bug_description}\n\n"
+        "Please help me debug this by following these steps:\n"
+        "1. **Search History**: Use `query_memory` to search for similar issues in the `fix` category.\n"
+        "2. **Check Context**: Search for relevant `architecture` or `context` memories that might explain the system's behavior.\n"
+        "3. **Verify**: Cross-reference memories with the actual code. Treat memories >1 month old with caution.\n"
+        "4. **Fix & Record**: After resolution, use `save_memory` (category: 'fix') to document the root cause and the fix."
+    )
+
+
+@mcp.prompt()
+def maintain_memory_health() -> str:
+    """Workflow for identifying and updating outdated or redundant memories."""
+    return (
+        "I want to perform memory maintenance to prevent hallucinations and redundancy:\n"
+        "1. **Identify**: Use `query_memory` with terms related to the current project status.\n"
+        "2. **Evaluate**: Check timestamps and relevance scores (< 0.02 are likely false positives). Verify findings against the current codebase.\n"
+        "3. **Action**: \n"
+        "   - **Update**: Use `update_memory` for information that has evolved.\n"
+        "   - **Delete**: Use `delete_memory` for information that is no longer accurate or has been superseded.\n"
+        "   - **Consolidate**: Merge overlapping memories into a single high-quality entry."
+    )
 
 
 def main():

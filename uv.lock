@@ -7,25 +7,6 @@ resolution-markers = [
 ]
 
 [[package]]
-name = "agentmemory"
-version = "2.0.0"
-source = { editable = "." }
-dependencies = [
-    { name = "fastembed" },
-    { name = "mcp" },
-    { name = "numpy" },
-    { name = "sqlite-vec" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastembed", specifier = ">=0.3.0" },
-    { name = "mcp", specifier = ">=1.0.0" },
-    { name = "numpy", specifier = ">=1.24.0" },
-    { name = "sqlite-vec", specifier = ">=0.1.0" },
-]
-
-[[package]]
 name = "annotated-types"
 version = "0.7.0"
 source = { registry = "https://pypi.org/simple" }
@@ -607,6 +588,25 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/49/6b/00187a044f98255225f172de653941e61da37104a9ea60e4f6887717e2b5/pillow-11.3.0-cp313-cp313t-win32.whl", hash = "sha256:2a3117c06b8fb646639dce83694f2f9eac405472713fcb1ae887469c0d4f6788", size = 6277546, upload-time = "2025-07-01T09:15:11.311Z" },
     { url = "https://files.pythonhosted.org/packages/e8/5c/6caaba7e261c0d75bab23be79f1d06b5ad2a2ae49f028ccec801b0e853d6/pillow-11.3.0-cp313-cp313t-win_amd64.whl", hash = "sha256:857844335c95bea93fb39e0fa2726b4d9d758850b34075a7e3ff4f4fa3aa3b31", size = 6985102, upload-time = "2025-07-01T09:15:13.164Z" },
     { url = "https://files.pythonhosted.org/packages/f3/7e/b623008460c09a0cb38263c93b828c666493caee2eb34ff67f778b87e58c/pillow-11.3.0-cp313-cp313t-win_arm64.whl", hash = "sha256:8797edc41f3e8536ae4b10897ee2f637235c94f27404cac7297f7b607dd0716e", size = 2424803, upload-time = "2025-07-01T09:15:15.695Z" },
+]
+
+[[package]]
+name = "projectcontext"
+version = "1.0.0"
+source = { editable = "." }
+dependencies = [
+    { name = "fastembed" },
+    { name = "mcp" },
+    { name = "numpy" },
+    { name = "sqlite-vec" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastembed", specifier = ">=0.3.0" },
+    { name = "mcp", specifier = ">=1.0.0" },
+    { name = "numpy", specifier = ">=1.24.0" },
+    { name = "sqlite-vec", specifier = ">=0.1.0" },
 ]
 
 [[package]]

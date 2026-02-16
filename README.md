@@ -16,7 +16,7 @@ A high-performance MCP (Model Context Protocol) server providing long-term memor
 ```bash
 # Clone the repository
 git clone <repo-url>
-cd agentmemory
+cd projectcontext
 
 # Install dependencies with uv
 uv sync
@@ -31,10 +31,10 @@ uv pip install -e .
 
 ```bash
 # Run directly
-agentmemory
+projectcontext
 
 # Or with uv
-uv run agentmemory
+uv run projectcontext
 ```
 
 ### MCP Configuration
@@ -46,8 +46,8 @@ Add to your MCP client configuration (e.g., `mcp.json`):
   "mcpServers": {
     "memory": {
       "command": "uv",
-      "args": ["run", "agentmemory"],
-      "cwd": "/path/to/agentmemory"
+      "args": ["run", "projectcontext"],
+      "cwd": "/path/to/projectcontext"
     }
   }
 }
@@ -59,7 +59,7 @@ Or using the installed script:
 {
   "mcpServers": {
     "memory": {
-      "command": "agentmemory"
+      "command": "projectcontext"
     }
   }
 }
@@ -398,9 +398,9 @@ This allows the memory to travel with the project while remaining hidden from ve
 ### Project Structure
 
 ```
-agentmemory/
+projectcontext/
 ├── src/
-│   └── agentmemory/
+│   └── projectcontext/
 │       ├── __init__.py      # Package initialization
 │       ├── server.py        # MCP Server
 │       ├── memory.py        # Memory Engine
@@ -427,7 +427,7 @@ uv run python tests/test_updates.py
 You can also test the tools interactively using the MCP Inspector:
 
 ```bash
-npx @modelcontextprotocol/inspector uv run agentmemory
+npx @modelcontextprotocol/inspector uv run projectcontext
 ```
 
 ## License

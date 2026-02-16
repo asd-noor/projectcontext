@@ -9,7 +9,7 @@ _.python.venv = { path = ".venv" }
 
 [tasks.start]
 description = "Start the MCP server"
-run = "uv run agentmemory"
+run = "uv run projectcontext"
 
 [tasks.test]
 description = "Run all tests"

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Quick Start Script for Memory Engine MCP Server
 
 set -e
@@ -8,7 +8,7 @@ echo "=========================================="
 echo ""
 
 # Check if uv is installed
-if ! command -v uv &> /dev/null; then
+if ! command -v uv &>/dev/null; then
     echo "❌ Error: uv is not installed"
     echo "   Install from: https://github.com/astral-sh/uv"
     exit 1
@@ -34,15 +34,13 @@ echo ""
 
 # Show available commands
 echo "📝 Available Commands:"
-echo "   • Start MCP server:     uv run agentmemory"
-echo "   • Test with inspector:  npx @modelcontextprotocol/inspector uv run agentmemory"
+echo "   • Start MCP server:     uv run projectcontext"
+echo "   • Test with inspector:  npx @modelcontextprotocol/inspector uv run projectcontext"
 echo "   • Run tests:            uv run python tests/test_server.py"
 echo ""
 
 echo "📖 Documentation:"
-echo "   • Setup guide:  cat SETUP.md"
 echo "   • Full README:  cat README.md"
-echo "   • MCP config:   cat mcp.json"
 echo ""
 
 # Offer to start the server
@@ -52,5 +50,5 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "🎯 Starting MCP server..."
     echo "   (Press Ctrl+C to stop)"
     echo ""
-    uv run agentmemory
+    uv run projectcontext
 fi

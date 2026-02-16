@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Test script for Memory MCP Server Updates"""
 
-from agentmemory.memory import MemoryEngine
+from projectcontext.memory import MemoryEngine
 
 
 def test_updates():
