@@ -37,4 +37,4 @@ run = "uv run python tests/test_resource.py"
 
 [tasks.install]
 description = "Install for the current user"
-run = "uv pip install --user ."
+run = "uv tool install ."
