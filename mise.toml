@@ -34,3 +34,7 @@ run = "uv run python tests/test_agenda.py"
 [tasks."test:resource"]
 description = "Run resource documentation tests"
 run = "uv run python tests/test_resource.py"
+
+[tasks.install]
+description = "Install for the current user"
+run = "uv pip install --user ."
