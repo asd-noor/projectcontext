@@ -5,6 +5,14 @@ This MCP server provides two core engines for AI assistants:
 1. **Memory Engine**: Long-term persistent memory storage for project context, decisions, and preferences.
 2. **Agenda Engine**: Task management system to create, track, and manage multi-step plans and todo lists.
 
+## MCP Resources
+
+### `projectcontext://usage-guidelines`
+The current document, providing comprehensive documentation for AI agents on how to effectively use the Memory and Agenda engines.
+
+### `projectcontext://schemas/{tool}`
+Provides the JSON schema for a specific tool. This is useful for AI agents to dynamically discover the required and optional parameters for each tool.
+
 ---
 
 ## Part 1: Memory Engine

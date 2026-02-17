@@ -20,6 +20,7 @@ A long-running MCP server that provides semantic and keyword search for long-ter
 """
 
 import os
+import json
 from typing import Any
 from mcp.server.fastmcp import FastMCP
 from projectcontext.memory import MemoryEngine
@@ -36,7 +37,7 @@ agenda_engine = AgendaEngine()
 # --- MCP Resources ---
 
 
-@mcp.resource("memory://usage-guidelines")
+@mcp.resource("projectcontext://usage-guidelines")
 def get_usage_guidelines() -> str:
     """Memory Engine usage guidelines for AI agents.
 
@@ -53,6 +54,23 @@ def get_usage_guidelines() -> str:
     guidelines_path = os.path.join(os.path.dirname(__file__), "SYSTEM_PROMPT.md")
     with open(guidelines_path, "r", encoding="utf-8") as f:
         return f.read()
+
+
+@mcp.resource("projectcontext://schemas/{tool}")
+async def get_tool_schema(tool: str) -> str:
+    """Get the JSON schema for a specific tool.
+
+    Args:
+        tool: The name of the tool to get the schema for.
+
+    Returns:
+        The tool's input schema as a JSON string.
+    """
+    tools = await mcp.list_tools()
+    for t in tools:
+        if t.name == tool:
+            return json.dumps(t.inputSchema, indent=2)
+    raise ValueError(f"Tool not found: {tool}")
 
 
 # --- MCP Tools ---

@@ -87,8 +87,11 @@ Or using the installed script:
 
 ## MCP Resources
 
-### `memory://usage-guidelines`
+### `projectcontext://usage-guidelines`
 Provides comprehensive documentation for AI agents on how to effectively use the Memory and Agenda engines, including categorization best practices and hallucination prevention.
+
+### `projectcontext://schemas/{tool}`
+Provides the JSON schema for a specific tool. This is useful for AI agents to understand the required and optional parameters for each tool.
 
 ## MCP Prompts
 
