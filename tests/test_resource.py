@@ -8,7 +8,7 @@ from mcp.client.stdio import stdio_client, StdioServerParameters
 
 async def test_resource():
     """Test that the usage guidelines resource can be read"""
-    print("Testing memory://usage-guidelines resource...\n")
+    print("Testing projectcontext://usage-guidelines resource...\n")
 
     try:
         # Start the MCP server as a subprocess
@@ -36,9 +36,9 @@ async def test_resource():
                     print(f"    Description: {resource.description[:80]}...")
 
                 # Try to read the usage guidelines resource
-                print("\n=== Reading memory://usage-guidelines ===")
+                print("\n=== Reading projectcontext://usage-guidelines ===")
                 content_result = await session.read_resource(
-                    "memory://usage-guidelines"
+                    "projectcontext://usage-guidelines"
                 )
 
                 if content_result.contents:
