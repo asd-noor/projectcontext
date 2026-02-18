@@ -37,7 +37,7 @@ agenda_engine = AgendaEngine()
 # --- MCP Resources ---
 
 
-@mcp.resource("projectcontext://usage-guidelines")
+@mcp.resource("projectcontext://usage-guidelines", mime_type="text/markdown")
 def get_usage_guidelines() -> str:
     """Memory Engine usage guidelines for AI agents.
 
