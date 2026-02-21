@@ -262,9 +262,13 @@ def delete_agenda(agenda_id: int) -> dict[str, Any]:
 
 
 @mcp.prompt()
-def setup_project_context() -> str:
-    """Template for initializing a new project with technical stack, goals, and conventions."""
-    return (
+def setup_project_context(query: str | None = None) -> str:
+    """Template for initializing a new project with technical stack, goals, and conventions.
+
+    Args:
+        query: Optional user request or project description.
+    """
+    prompt = (
         "I need to set up the context for a new project.\n\n"
         "First, please use `query_memory` to check if any context already exists for this project to avoid duplicates.\n"
         "If not, use `save_memory` to record the following sections using standard categories:\n"
@@ -274,6 +278,9 @@ def setup_project_context() -> str:
         "\n"
         "For each entry, ensure the content explains the 'why' behind choices and includes specific technical details as per established best practices."
     )
+    if query:
+        return f"User Request: {query}\n\n{prompt}"
+    return prompt
 
 
 @mcp.prompt()
