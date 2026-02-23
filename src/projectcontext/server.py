@@ -56,7 +56,7 @@ def get_usage_guidelines() -> str:
         return f.read()
 
 
-@mcp.resource("projectcontext://schemas/{tool}")
+@mcp.resource("projectcontext://schemas/{tool}", mime_type="application/json")
 async def get_tool_schema(tool: str) -> str:
     """Get the JSON schema for a specific tool.
 
