@@ -17,6 +17,7 @@
 """Memory Engine implementation."""
 
 import sqlite3
+import sys
 import sqlite_vec
 from typing import Any
 from fastembed import TextEmbedding
@@ -36,7 +37,9 @@ class MemoryEngine:
         sqlite_vec.load(self.db)
         
         # Initialize fastembed model first to allow backfilling during _init_db
+        print(f"[projectcontext] Loading embedding model ({MODEL_NAME})...", file=sys.stderr, flush=True)
         self.model = TextEmbedding(model_name=MODEL_NAME)
+        print("[projectcontext] Embedding model ready.", file=sys.stderr, flush=True)
         
         self._init_db()
 
